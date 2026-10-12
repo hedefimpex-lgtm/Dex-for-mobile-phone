@@ -175,6 +175,14 @@ public class Taskbar extends LinearLayout {
         return v;
     }
 
+    /** Sets how see-through the taskbar background is (0 = transparent, 100 = solid). */
+    public void setOpacity(int percent) {
+        int alpha = Math.round(Math.max(0, Math.min(100, percent)) * 2.55f);
+        setBackgroundColor((alpha << 24) | (Ui.TASKBAR_BG & 0x00FFFFFF));
+        // A fully transparent bar should not cast a shadow over the wallpaper.
+        setElevation(Ui.dp(getContext(), 24) * (alpha / 255f));
+    }
+
     public void setItems(List<Item> items) {
         Context c = getContext();
         itemsRow.removeAllViews();

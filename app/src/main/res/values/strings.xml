@@ -100,6 +100,7 @@
     <string name="size_medium">Medium</string>
     <string name="size_large">Large</string>
     <string name="settings_freeform_force">Always request pop-up windows (use if your phone has them but DeZ doesn\'t detect it)</string>
+    <string name="settings_taskbar_opacity">Taskbar opacity: %1$d%%</string>
     <plurals name="files_items">
         <item quantity="one">%1$d item</item>
         <item quantity="other">%1$d items</item>

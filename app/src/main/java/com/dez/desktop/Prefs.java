@@ -18,6 +18,7 @@ public final class Prefs {
     private static final String KEY_WINDOW_SIZE = "window_size";
     private static final String KEY_FREEFORM_HINT = "freeform_hint_dismissed";
     private static final String KEY_FREEFORM_FORCED = "freeform_forced";
+    private static final String KEY_TASKBAR_OPACITY = "taskbar_opacity";
 
     public static final int SIZE_SMALL = 0;
     public static final int SIZE_MEDIUM = 1;
@@ -117,6 +118,15 @@ public final class Prefs {
 
     public void setFreeformHintDismissed(boolean v) {
         sp.edit().putBoolean(KEY_FREEFORM_HINT, v).apply();
+    }
+
+    /** Taskbar background opacity in percent: 0 = fully transparent, 100 = solid. */
+    public int getTaskbarOpacity() {
+        return Math.max(0, Math.min(100, sp.getInt(KEY_TASKBAR_OPACITY, 92)));
+    }
+
+    public void setTaskbarOpacity(int percent) {
+        sp.edit().putInt(KEY_TASKBAR_OPACITY, percent).apply();
     }
 
     private List<String> readList(String key, List<String> def) {

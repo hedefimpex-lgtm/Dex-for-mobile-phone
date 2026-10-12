@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -82,6 +83,7 @@ final class SettingsApp extends WindowApp {
                 prefs.setLandscapeLocked(on);
                 host.applyPrefs();
             });
+            taskbarOpacity(prefs);
 
             header(R.string.settings_windows);
             toggle(R.string.settings_freeform, prefs.isFreeformEnabled(), (b, on) -> {
@@ -168,6 +170,34 @@ final class SettingsApp extends WindowApp {
             lp.topMargin = Ui.dp(host, 4);
             lp.bottomMargin = Ui.dp(host, 4);
             column.addView(b, lp);
+        }
+
+        /** Slider for the taskbar's background opacity; applies live while dragging. */
+        private void taskbarOpacity(Prefs prefs) {
+            Context c = host;
+            TextView label = body(c.getString(R.string.settings_taskbar_opacity, prefs.getTaskbarOpacity()));
+            SeekBar bar = new SeekBar(c);
+            bar.setMax(100);
+            bar.setProgress(prefs.getTaskbarOpacity());
+            bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (!fromUser) return;
+                    prefs.setTaskbarOpacity(progress);
+                    label.setText(c.getString(R.string.settings_taskbar_opacity, progress));
+                    host.applyTaskbarOpacity();
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                }
+            });
+            column.addView(bar, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 40)));
         }
 
         /** Small / Medium / Large segmented choice for Android apps' pop-up windows. */

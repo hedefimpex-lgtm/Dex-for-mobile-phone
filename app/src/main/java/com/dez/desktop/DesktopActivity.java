@@ -295,7 +295,12 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
     }
 
     /** Applies wallpaper and orientation preferences. */
+    public void applyTaskbarOpacity() {
+        taskbar.setOpacity(prefs.getTaskbarOpacity());
+    }
+
     public void applyPrefs() {
+        applyTaskbarOpacity();
         int wp = prefs.getWallpaper();
         if (wp == Prefs.WALLPAPER_SYSTEM) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
