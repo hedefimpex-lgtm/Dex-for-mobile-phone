@@ -284,7 +284,7 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
 
         taskbar = new Taskbar(this, this);
         column.addView(taskbar, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 48)));
+                LinearLayout.LayoutParams.MATCH_PARENT, taskbar.preferredHeight()));
 
         setContentView(root);
     }
@@ -299,8 +299,17 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
         taskbar.setOpacity(prefs.getTaskbarOpacity());
     }
 
+    /** Re-applies icon size / spacing settings to the desktop and taskbar. */
+    public void applyIconMetrics() {
+        desktopGrid.setIconMetrics(prefs.getDesktopIconSize(), prefs.getDesktopIconSpacing());
+        taskbar.setIconMetrics(prefs.getTaskbarIconSize(), prefs.getTaskbarIconSpacing());
+        refreshDesktop();
+        refreshTaskbar();
+    }
+
     public void applyPrefs() {
         applyTaskbarOpacity();
+        applyIconMetrics();
         int wp = prefs.getWallpaper();
         if (wp == Prefs.WALLPAPER_SYSTEM) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);

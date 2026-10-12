@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
@@ -74,6 +75,8 @@ public class Taskbar extends LinearLayout {
     private final Handler main = new Handler(Looper.getMainLooper());
     private ConnectivityManager.NetworkCallback netCallback;
     private boolean receiversRegistered;
+    private int iconDp = 30;
+    private int spacingDp = 2;
 
     private final BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
         @Override
@@ -183,6 +186,23 @@ public class Taskbar extends LinearLayout {
         setElevation(Ui.dp(getContext(), 24) * (alpha / 255f));
     }
 
+    /** App icon size and gap between app icons, in dp; call {@link #setItems} afterwards. */
+    public void setIconMetrics(int iconDp, int spacingDp) {
+        this.iconDp = iconDp;
+        this.spacingDp = spacingDp;
+        // Grow the bar for large icons; 48dp is the normal height.
+        ViewGroup.LayoutParams lp = getLayoutParams();
+        if (lp != null) {
+            lp.height = Ui.dp(getContext(), Math.max(48, iconDp + 18));
+            setLayoutParams(lp);
+        }
+    }
+
+    /** Taskbar height in pixels for the current icon size. */
+    public int preferredHeight() {
+        return Ui.dp(getContext(), Math.max(48, iconDp + 18));
+    }
+
     public void setItems(List<Item> items) {
         Context c = getContext();
         itemsRow.removeAllViews();
@@ -191,7 +211,7 @@ public class Taskbar extends LinearLayout {
             cell.setBackground(Ui.ripple(c, item.focused ? 0x22FFFFFF : 0, 6));
             ImageView icon = new ImageView(c);
             icon.setImageDrawable(item.icon);
-            cell.addView(icon, new FrameLayout.LayoutParams(Ui.dp(c, 30), Ui.dp(c, 30), Gravity.CENTER));
+            cell.addView(icon, new FrameLayout.LayoutParams(Ui.dp(c, iconDp), Ui.dp(c, iconDp), Gravity.CENTER));
             if (item.running) {
                 View indicator = new View(c);
                 indicator.setBackground(Ui.rounded(item.focused ? Ui.ACCENT : Ui.TEXT_DIM, Ui.dp(c, 2)));
@@ -208,8 +228,9 @@ public class Taskbar extends LinearLayout {
                 callbacks.onTaskbarItemLongClick(item.key, v);
                 return true;
             });
-            LayoutParams lp = new LayoutParams(Ui.dp(c, 46), Ui.dp(c, 44));
-            lp.setMargins(Ui.dp(c, 1), 0, Ui.dp(c, 1), 0);
+            LayoutParams lp = new LayoutParams(Ui.dp(c, iconDp + 16), Ui.dp(c, iconDp + 14));
+            int gap = Ui.dp(c, spacingDp / 2f);
+            lp.setMargins(gap, 0, gap, 0);
             itemsRow.addView(cell, lp);
         }
     }

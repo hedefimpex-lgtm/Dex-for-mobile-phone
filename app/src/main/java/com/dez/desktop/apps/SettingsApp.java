@@ -83,7 +83,28 @@ final class SettingsApp extends WindowApp {
                 prefs.setLandscapeLocked(on);
                 host.applyPrefs();
             });
-            taskbarOpacity(prefs);
+            slider(R.string.settings_taskbar_opacity, 0, 100, prefs.getTaskbarOpacity(),
+                    prefs::setTaskbarOpacity, host::applyTaskbarOpacity);
+
+            header(R.string.settings_icons);
+            slider(R.string.settings_desktop_icon_size, Prefs.DESKTOP_ICON_MIN, Prefs.DESKTOP_ICON_MAX,
+                    prefs.getDesktopIconSize(), prefs::setDesktopIconSize, host::applyIconMetrics);
+            slider(R.string.settings_desktop_icon_spacing, Prefs.DESKTOP_SPACING_MIN,
+                    Prefs.DESKTOP_SPACING_MAX, prefs.getDesktopIconSpacing(),
+                    prefs::setDesktopIconSpacing, host::applyIconMetrics);
+            slider(R.string.settings_taskbar_icon_size, Prefs.TASKBAR_ICON_MIN, Prefs.TASKBAR_ICON_MAX,
+                    prefs.getTaskbarIconSize(), prefs::setTaskbarIconSize, host::applyIconMetrics);
+            slider(R.string.settings_taskbar_icon_spacing, Prefs.TASKBAR_SPACING_MIN,
+                    Prefs.TASKBAR_SPACING_MAX, prefs.getTaskbarIconSpacing(),
+                    prefs::setTaskbarIconSpacing, host::applyIconMetrics);
+            action(R.string.settings_icons_reset, () -> {
+                prefs.setDesktopIconSize(Prefs.DESKTOP_ICON_DEFAULT);
+                prefs.setDesktopIconSpacing(Prefs.DESKTOP_SPACING_DEFAULT);
+                prefs.setTaskbarIconSize(Prefs.TASKBAR_ICON_DEFAULT);
+                prefs.setTaskbarIconSpacing(Prefs.TASKBAR_SPACING_DEFAULT);
+                host.applyIconMetrics();
+                build();
+            });
 
             header(R.string.settings_windows);
             toggle(R.string.settings_freeform, prefs.isFreeformEnabled(), (b, on) -> {
@@ -172,20 +193,27 @@ final class SettingsApp extends WindowApp {
             column.addView(b, lp);
         }
 
-        /** Slider for the taskbar's background opacity; applies live while dragging. */
-        private void taskbarOpacity(Prefs prefs) {
+        private interface IntSetter {
+            void set(int value);
+        }
+
+        /**
+         * Labelled slider from {@code min} to {@code max}; {@code labelRes} takes the value as
+         * {@code %1$d}. Changes are saved and applied while dragging.
+         */
+        private void slider(int labelRes, int min, int max, int value, IntSetter save, Runnable apply) {
             Context c = host;
-            TextView label = body(c.getString(R.string.settings_taskbar_opacity, prefs.getTaskbarOpacity()));
+            TextView label = body(c.getString(labelRes, value));
             SeekBar bar = new SeekBar(c);
-            bar.setMax(100);
-            bar.setProgress(prefs.getTaskbarOpacity());
+            bar.setMax(max - min);
+            bar.setProgress(value - min);
             bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     if (!fromUser) return;
-                    prefs.setTaskbarOpacity(progress);
-                    label.setText(c.getString(R.string.settings_taskbar_opacity, progress));
-                    host.applyTaskbarOpacity();
+                    save.set(min + progress);
+                    label.setText(c.getString(labelRes, min + progress));
+                    apply.run();
                 }
 
                 @Override

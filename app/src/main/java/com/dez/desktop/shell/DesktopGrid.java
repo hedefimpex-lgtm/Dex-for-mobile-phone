@@ -28,17 +28,17 @@ public class DesktopGrid extends ViewGroup {
     }
 
     private final Callbacks callbacks;
-    private final int cellW;
-    private final int cellH;
+    private int iconSize;
+    private int cellW;
+    private int cellH;
     private final int pad;
     private float lastX, lastY;
 
     public DesktopGrid(Context c, Callbacks callbacks) {
         super(c);
         this.callbacks = callbacks;
-        cellW = Ui.dp(c, 88);
-        cellH = Ui.dp(c, 96);
         pad = Ui.dp(c, 10);
+        setIconMetrics(46, 6);
         setLongClickable(true);
         setOnLongClickListener(v -> {
             callbacks.onDesktopLongPress(lastX, lastY);
@@ -55,6 +55,18 @@ public class DesktopGrid extends ViewGroup {
         return super.dispatchTouchEvent(ev);
     }
 
+    /**
+     * Icon size and the extra gap between icons, in dp. Each cell leaves room for a two-line
+     * label; call {@link #setApps} afterwards to rebuild the icons.
+     */
+    public void setIconMetrics(int iconDp, int spacingDp) {
+        Context c = getContext();
+        iconSize = Ui.dp(c, iconDp);
+        cellW = Ui.dp(c, Math.max(iconDp + 36, 72) + spacingDp);
+        cellH = Ui.dp(c, iconDp + 44 + spacingDp);
+        requestLayout();
+    }
+
     public void setApps(List<AppInfo> apps) {
         removeAllViews();
         Context c = getContext();
@@ -66,7 +78,7 @@ public class DesktopGrid extends ViewGroup {
             cell.setBackground(Ui.ripple(c, 0, 10));
             ImageView icon = new ImageView(c);
             icon.setImageDrawable(app.icon);
-            cell.addView(icon, new LinearLayout.LayoutParams(Ui.dp(c, 46), Ui.dp(c, 46)));
+            cell.addView(icon, new LinearLayout.LayoutParams(iconSize, iconSize));
             TextView label = Ui.text(c, app.label, 12, 0xFFFFFFFF);
             label.setGravity(Gravity.CENTER_HORIZONTAL);
             label.setMaxLines(2);

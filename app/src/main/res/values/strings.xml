@@ -101,6 +101,12 @@
     <string name="size_large">Large</string>
     <string name="settings_freeform_force">Always request pop-up windows (use if your phone has them but DeZ doesn\'t detect it)</string>
     <string name="settings_taskbar_opacity">Taskbar opacity: %1$d%%</string>
+    <string name="settings_icons">Icons</string>
+    <string name="settings_desktop_icon_size">Desktop icon size: %1$d dp</string>
+    <string name="settings_desktop_icon_spacing">Desktop icon spacing: %1$d dp</string>
+    <string name="settings_taskbar_icon_size">Taskbar icon size: %1$d dp</string>
+    <string name="settings_taskbar_icon_spacing">Taskbar icon spacing: %1$d dp</string>
+    <string name="settings_icons_reset">Reset icon settings</string>
     <plurals name="files_items">
         <item quantity="one">%1$d item</item>
         <item quantity="other">%1$d items</item>

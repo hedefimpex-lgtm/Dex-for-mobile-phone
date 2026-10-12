@@ -99,6 +99,12 @@
     <string name="size_large">Büyük</string>
     <string name="settings_freeform_force">Her zaman açılır pencere iste (telefonunuzda var ama DeZ algılamıyorsa açın)</string>
     <string name="settings_taskbar_opacity">Görev çubuğu opaklığı: %%%1$d</string>
+    <string name="settings_icons">Simgeler</string>
+    <string name="settings_desktop_icon_size">Masaüstü simge boyutu: %1$d dp</string>
+    <string name="settings_desktop_icon_spacing">Masaüstü simge aralığı: %1$d dp</string>
+    <string name="settings_taskbar_icon_size">Görev çubuğu simge boyutu: %1$d dp</string>
+    <string name="settings_taskbar_icon_spacing">Görev çubuğu simge aralığı: %1$d dp</string>
+    <string name="settings_icons_reset">Simge ayarlarını sıfırla</string>
     <plurals name="files_items">
         <item quantity="one">%1$d öğe</item>
         <item quantity="other">%1$d öğe</item>

@@ -19,6 +19,16 @@ public final class Prefs {
     private static final String KEY_FREEFORM_HINT = "freeform_hint_dismissed";
     private static final String KEY_FREEFORM_FORCED = "freeform_forced";
     private static final String KEY_TASKBAR_OPACITY = "taskbar_opacity";
+    private static final String KEY_DESKTOP_ICON_SIZE = "desktop_icon_size";
+    private static final String KEY_DESKTOP_ICON_SPACING = "desktop_icon_spacing";
+    private static final String KEY_TASKBAR_ICON_SIZE = "taskbar_icon_size";
+    private static final String KEY_TASKBAR_ICON_SPACING = "taskbar_icon_spacing";
+
+    // Icon size / spacing ranges and defaults, in dp.
+    public static final int DESKTOP_ICON_MIN = 32, DESKTOP_ICON_MAX = 72, DESKTOP_ICON_DEFAULT = 46;
+    public static final int DESKTOP_SPACING_MIN = 0, DESKTOP_SPACING_MAX = 40, DESKTOP_SPACING_DEFAULT = 6;
+    public static final int TASKBAR_ICON_MIN = 20, TASKBAR_ICON_MAX = 44, TASKBAR_ICON_DEFAULT = 30;
+    public static final int TASKBAR_SPACING_MIN = 0, TASKBAR_SPACING_MAX = 24, TASKBAR_SPACING_DEFAULT = 2;
 
     public static final int SIZE_SMALL = 0;
     public static final int SIZE_MEDIUM = 1;
@@ -127,6 +137,44 @@ public final class Prefs {
 
     public void setTaskbarOpacity(int percent) {
         sp.edit().putInt(KEY_TASKBAR_OPACITY, percent).apply();
+    }
+
+    public int getDesktopIconSize() {
+        return clampInt(KEY_DESKTOP_ICON_SIZE, DESKTOP_ICON_DEFAULT, DESKTOP_ICON_MIN, DESKTOP_ICON_MAX);
+    }
+
+    public void setDesktopIconSize(int dp) {
+        sp.edit().putInt(KEY_DESKTOP_ICON_SIZE, dp).apply();
+    }
+
+    public int getDesktopIconSpacing() {
+        return clampInt(KEY_DESKTOP_ICON_SPACING, DESKTOP_SPACING_DEFAULT, DESKTOP_SPACING_MIN,
+                DESKTOP_SPACING_MAX);
+    }
+
+    public void setDesktopIconSpacing(int dp) {
+        sp.edit().putInt(KEY_DESKTOP_ICON_SPACING, dp).apply();
+    }
+
+    public int getTaskbarIconSize() {
+        return clampInt(KEY_TASKBAR_ICON_SIZE, TASKBAR_ICON_DEFAULT, TASKBAR_ICON_MIN, TASKBAR_ICON_MAX);
+    }
+
+    public void setTaskbarIconSize(int dp) {
+        sp.edit().putInt(KEY_TASKBAR_ICON_SIZE, dp).apply();
+    }
+
+    public int getTaskbarIconSpacing() {
+        return clampInt(KEY_TASKBAR_ICON_SPACING, TASKBAR_SPACING_DEFAULT, TASKBAR_SPACING_MIN,
+                TASKBAR_SPACING_MAX);
+    }
+
+    public void setTaskbarIconSpacing(int dp) {
+        sp.edit().putInt(KEY_TASKBAR_ICON_SPACING, dp).apply();
+    }
+
+    private int clampInt(String key, int def, int min, int max) {
+        return Math.max(min, Math.min(max, sp.getInt(key, def)));
     }
 
     private List<String> readList(String key, List<String> def) {
