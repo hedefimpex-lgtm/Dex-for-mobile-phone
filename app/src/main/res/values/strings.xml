@@ -87,6 +87,10 @@
     <string name="settings_storage_granted">DeZ can access your files.</string>
     <string name="settings_about">About</string>
     <string name="settings_version">DeZ %1$s — a desktop experience for phones</string>
+    <string name="app_sample">Sample Window</string>
+    <string name="sample_text">This content sits inside a DeZ window frame.</string>
+    <string name="sample_button">Click me</string>
+    <string name="sample_clicked">Clicked %1$d times</string>
     <plurals name="files_items">
         <item quantity="one">%1$d item</item>
         <item quantity="other">%1$d items</item>

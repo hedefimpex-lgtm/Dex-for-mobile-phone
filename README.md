@@ -63,13 +63,36 @@ Her push'ta GitHub Actions APK'yı derler ve "DeZ-debug-apk" adıyla yükler.
 2. Her açılışta masaüstü modunda başlamak için *DeZ Ayarları → Ana ekran → Varsayılan ana ekran uygulamasını seç*.
 3. Normal başlatıcıya dönmek için Uygulamalar panelindeki **DeZ'den çık** düğmesini kullanın.
 
+## Pencere çerçevesi (`WindowFrame`)
+
+Her DeZ penceresi aynı basit çerçeveyle çizilir:
+
+```
+┌──────────────────────────────────────────┐
+│ [simge] Başlık                ─   □   ✕  │  ← başlık çubuğu
+├──────────────────────────────────────────┤
+│                                          │
+│                  içerik                  │
+│                                          │
+└──────────────────────────────────────────┘
+```
+
+- `wm/WindowFrame.java` yalnızca görünümü çizer: başlık çubuğu, Küçült / Ekranı kapla / Kapat düğmeleri,
+  kenarlık ve içerik alanı. Düğme basışlarını `WindowFrame.Listener` ile bildirir.
+- `wm/DesktopWindow.java` bu çerçeveyi kullanır ve davranışı ekler: sürükleme, boyutlandırma, yaslama.
+
+Yeni bir pencereli uygulama yazmak için yalnızca içerik görünümünü vermek yeterlidir; örnek:
+`apps/SampleApp.java` (**Örnek Pencere**). Sınıfı kopyalayın, `createView` içinde kendi görünümünüzü
+döndürün ve `apps/BuiltInApps.java` listesine ekleyin.
+
 ## Proje yapısı
 
 ```
 app/src/main/java/com/dez/desktop/
   DesktopActivity.java        masaüstü kabuğu (her şeyi birleştirir)
   SecondaryDesktopActivity    harici ekran masaüstü
-  wm/DesktopWindow.java       pencere: başlık çubuğu, düğmeler, sürükleme, boyutlandırma
+  wm/WindowFrame.java         basit pencere çerçevesi: başlık çubuğu, düğmeler, içerik alanı
+  wm/DesktopWindow.java       pencere davranışı: sürükleme, boyutlandırma
   wm/WindowLayer.java         pencere yöneticisi: odak, küçült/büyüt, yaslama
   shell/Taskbar.java          görev çubuğu + sistem tepsisi
   shell/StartMenu.java        uygulama paneli

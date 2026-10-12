@@ -85,6 +85,10 @@
     <string name="settings_storage_granted">DeZ dosyalarınıza erişebilir.</string>
     <string name="settings_about">Hakkında</string>
     <string name="settings_version">DeZ %1$s — telefonlar için masaüstü deneyimi</string>
+    <string name="app_sample">Örnek Pencere</string>
+    <string name="sample_text">Bu içerik bir DeZ pencere çerçevesinin içinde.</string>
+    <string name="sample_button">Tıkla</string>
+    <string name="sample_clicked">%1$d kez tıklandı</string>
     <plurals name="files_items">
         <item quantity="one">%1$d öğe</item>
         <item quantity="other">%1$d öğe</item>

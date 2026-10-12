@@ -15,9 +15,11 @@ public final class BuiltInApps {
     public static final String CALCULATOR = "calculator";
     public static final String BROWSER = "browser";
     public static final String SETTINGS = "settings";
+    public static final String SAMPLE = "sample";
 
     private static final List<WindowApp> APPS = Arrays.asList(
-            new FilesApp(), new NotesApp(), new CalculatorApp(), new BrowserApp(), new SettingsApp());
+            new FilesApp(), new NotesApp(), new CalculatorApp(), new BrowserApp(), new SettingsApp(),
+            new SampleApp());
 
     private BuiltInApps() {}
 

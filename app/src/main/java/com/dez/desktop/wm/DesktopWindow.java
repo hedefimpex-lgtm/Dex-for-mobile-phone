@@ -3,27 +3,19 @@ package com.dez.desktop.wm;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Rect;
-import android.text.TextUtils;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.dez.desktop.AppInfo;
-import com.dez.desktop.R;
 import com.dez.desktop.Ui;
 
 /**
- * A DeX-style app window: title bar with app icon, title and minimise / maximise / close buttons,
- * draggable by its title bar (snaps to screen halves or maximises at the edges), resizable from
+ * A DeX-style app window: a {@link WindowFrame} (title bar + content) that is draggable by its title bar (snaps to screen halves or maximises at the edges), resizable from
  * its left, right and bottom edges and corners, double-tap on the title bar to maximise.
  */
 @SuppressLint("ViewConstructor")
@@ -52,11 +44,7 @@ public class DesktopWindow extends FrameLayout {
 
     private final Host host;
     private final AppInfo app;
-    private final LinearLayout titleBar;
-    private final TextView titleView;
-    private final ImageButton maxButton;
-    private final FrameLayout contentFrame;
-    private View content;
+    private final WindowFrame frame;
 
     /** Bounds (in the window layer) used when the window is neither maximised nor snapped. */
     final Rect normalBounds = new Rect();
@@ -69,51 +57,29 @@ public class DesktopWindow extends FrameLayout {
         super(c);
         this.app = app;
         this.host = host;
-        float radius = Ui.dp(c, 10);
-        setBackground(Ui.rounded(Ui.WINDOW_BG, radius));
-        setOutlineProvider(ViewOutlineProvider.BACKGROUND);
-        setClipToOutline(true);
 
-        LinearLayout column = new LinearLayout(c);
-        column.setOrientation(LinearLayout.VERTICAL);
-        addView(column, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        frame = new WindowFrame(c);
+        frame.setIcon(app.icon);
+        frame.setTitle(app.label);
+        frame.setListener(new WindowFrame.Listener() {
+            @Override
+            public void onMinimize() {
+                host.minimizeWindow(DesktopWindow.this);
+            }
 
-        titleBar = new LinearLayout(c);
-        titleBar.setOrientation(LinearLayout.HORIZONTAL);
-        titleBar.setGravity(Gravity.CENTER_VERTICAL);
-        titleBar.setPadding(Ui.dp(c, 10), 0, Ui.dp(c, 2), 0);
-        column.addView(titleBar, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 38)));
+            @Override
+            public void onToggleMaximize() {
+                host.toggleMaximize(DesktopWindow.this);
+            }
 
-        ImageView icon = new ImageView(c);
-        icon.setImageDrawable(app.icon);
-        titleBar.addView(icon, new LinearLayout.LayoutParams(Ui.dp(c, 20), Ui.dp(c, 20)));
+            @Override
+            public void onClose() {
+                host.closeWindow(DesktopWindow.this);
+            }
+        });
+        frame.getTitleBar().setOnTouchListener(new TitleDragListener());
+        addView(frame, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
-        titleView = Ui.text(c, app.label, 13, Ui.TEXT);
-        titleView.setSingleLine(true);
-        titleView.setEllipsize(TextUtils.TruncateAt.END);
-        titleView.setPadding(Ui.dp(c, 10), 0, Ui.dp(c, 8), 0);
-        titleBar.addView(titleView, new LinearLayout.LayoutParams(0,
-                LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-
-        int btn = Ui.dp(c, 40);
-        titleBar.addView(Ui.iconButton(c, R.drawable.ic_minimize, 40, 10,
-                        c.getString(R.string.win_minimize), v -> host.minimizeWindow(this)),
-                new LinearLayout.LayoutParams(btn, LinearLayout.LayoutParams.MATCH_PARENT));
-        maxButton = Ui.iconButton(c, R.drawable.ic_maximize, 40, 10,
-                c.getString(R.string.win_maximize), v -> host.toggleMaximize(this));
-        titleBar.addView(maxButton,
-                new LinearLayout.LayoutParams(btn, LinearLayout.LayoutParams.MATCH_PARENT));
-        ImageButton close = Ui.iconButton(c, R.drawable.ic_close, 40, 10,
-                c.getString(R.string.win_close), v -> host.closeWindow(this));
-        titleBar.addView(close,
-                new LinearLayout.LayoutParams(btn, LinearLayout.LayoutParams.MATCH_PARENT));
-
-        contentFrame = new FrameLayout(c);
-        column.addView(contentFrame, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
-
-        titleBar.setOnTouchListener(new TitleDragListener());
         addResizeHandles(c);
         setActive(false);
     }
@@ -132,21 +98,19 @@ public class DesktopWindow extends FrameLayout {
     }
 
     public View getContent() {
-        return content;
+        return frame.getContent();
     }
 
     public void setContent(View v) {
-        contentFrame.removeAllViews();
-        content = v;
-        contentFrame.addView(v, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        frame.setContent(v);
     }
 
     public CharSequence getTitle() {
-        return titleView.getText();
+        return frame.getTitle();
     }
 
     public void setTitle(CharSequence title) {
-        titleView.setText(title);
+        frame.setTitle(title);
     }
 
     public boolean isMinimized() {
@@ -163,17 +127,12 @@ public class DesktopWindow extends FrameLayout {
 
     void setActive(boolean active) {
         this.active = active;
-        titleBar.setBackgroundColor(active ? Ui.TITLE_FOCUSED : Ui.TITLE_UNFOCUSED);
-        titleView.setAlpha(active ? 1f : 0.6f);
+        frame.setActive(active);
         setElevation(Ui.dp(getContext(), active ? 18 : 6));
     }
 
     void updateMaximizeButton() {
-        boolean restore = maximized || snap != SNAP_NONE;
-        maxButton.setImageResource(restore ? R.drawable.ic_restore : R.drawable.ic_maximize);
-        String label = getContext().getString(restore ? R.string.win_restore : R.string.win_maximize);
-        maxButton.setContentDescription(label);
-        maxButton.setTooltipText(label);
+        frame.setMaximized(maximized || snap != SNAP_NONE);
     }
 
     /** Places the window at {@code r} (layer coordinates); width/height < 0 means match parent. */
