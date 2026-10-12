@@ -99,6 +99,10 @@ final class SettingsApp extends WindowApp {
                 cmd.setPadding(p, p, p, p);
                 action(R.string.settings_dev_options, host::openDeveloperOptions);
             }
+            toggle(R.string.settings_freeform_force, prefs.isFreeformForced(), (b, on) -> {
+                prefs.setFreeformForced(on);
+                build();
+            });
             body(c.getString(R.string.settings_window_size));
             column.addView(sizeChooser(prefs));
             toggle(R.string.settings_desktop_ua, prefs.isDesktopUserAgent(),

@@ -97,6 +97,7 @@
     <string name="size_small">Küçük</string>
     <string name="size_medium">Orta</string>
     <string name="size_large">Büyük</string>
+    <string name="settings_freeform_force">Her zaman açılır pencere iste (telefonunuzda var ama DeZ algılamıyorsa açın)</string>
     <plurals name="files_items">
         <item quantity="one">%1$d öğe</item>
         <item quantity="other">%1$d öğe</item>

@@ -17,6 +17,7 @@ public final class Prefs {
     private static final String KEY_DESKTOP_UA = "desktop_ua";
     private static final String KEY_WINDOW_SIZE = "window_size";
     private static final String KEY_FREEFORM_HINT = "freeform_hint_dismissed";
+    private static final String KEY_FREEFORM_FORCED = "freeform_forced";
 
     public static final int SIZE_SMALL = 0;
     public static final int SIZE_MEDIUM = 1;
@@ -99,6 +100,15 @@ public final class Prefs {
 
     public void setWindowSize(int size) {
         sp.edit().putInt(KEY_WINDOW_SIZE, size).apply();
+    }
+
+    /** Request pop-up windows even when DeZ cannot detect support for them. */
+    public boolean isFreeformForced() {
+        return sp.getBoolean(KEY_FREEFORM_FORCED, false);
+    }
+
+    public void setFreeformForced(boolean v) {
+        sp.edit().putBoolean(KEY_FREEFORM_FORCED, v).apply();
     }
 
     public boolean isFreeformHintDismissed() {

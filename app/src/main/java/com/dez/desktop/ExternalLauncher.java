@@ -19,9 +19,12 @@ public final class ExternalLauncher {
     private ExternalLauncher() {}
 
     public static boolean isFreeformSupported(Context c) {
+        if (new Prefs(c).isFreeformForced()) return true;
         if (c.getPackageManager().hasSystemFeature(PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT)) {
             return true;
         }
+        // Samsung phones have pop-up view built in but don't declare the freeform feature.
+        if ("samsung".equalsIgnoreCase(android.os.Build.MANUFACTURER)) return true;
         try {
             return Settings.Global.getInt(c.getContentResolver(), "enable_freeform_support", 0) != 0;
         } catch (RuntimeException e) {
