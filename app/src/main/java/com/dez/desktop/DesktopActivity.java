@@ -279,7 +279,7 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
         recents = new RecentsOverlay(this, this);
         workspace.addView(recents, matchParent());
 
-        startMenu = new StartMenu(this, this);
+        startMenu = new StartMenu(this, prefs, this);
         workspace.addView(startMenu, matchParent());
 
         taskbar = new Taskbar(this, this);
@@ -346,15 +346,8 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
         for (AppInfo a : apps) complete |= !a.isBuiltIn();
         if (complete) externalRunning.retainAll(appsByKey.keySet()); // drop uninstalled apps
         startMenu.setApps(allApps);
-        refreshGroups();
         refreshDesktop();
         refreshTaskbar();
-    }
-
-    private void refreshGroups() {
-        Map<String, Set<String>> members = new java.util.HashMap<>();
-        for (String g : prefs.getGroups()) members.put(g, new java.util.HashSet<>(prefs.getGroupApps(g)));
-        startMenu.setGroups(prefs.getGroups(), members);
     }
 
     private void refreshDesktop() {
@@ -504,7 +497,7 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
 
     private static final int M_OPEN = 1, M_WINDOW = 2, M_FULLSCREEN = 3, M_NEW = 4, M_PIN = 5,
             M_DESKTOP = 6, M_INFO = 7, M_CLOSE_ALL = 8, M_FORGET = 9, M_LEFT = 10, M_RIGHT = 11,
-            M_FILL = 12, M_GROUPS = 13;
+            M_FILL = 12;
 
     /** "Open in pop-up window" plus, when pop-up windows work, left / right half and fill. */
     private void addWindowItems(Menu m, int order) {
@@ -529,95 +522,8 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
         m.add(0, M_PIN, 3, prefs.isPinned(app.key) ? R.string.menu_unpin : R.string.menu_pin);
         m.add(0, M_DESKTOP, 4, prefs.isOnDesktop(app.key)
                 ? R.string.menu_remove_desktop : R.string.menu_add_desktop);
-        m.add(0, M_GROUPS, 5, R.string.menu_groups);
-        if (!app.isBuiltIn()) m.add(0, M_INFO, 6, R.string.menu_app_info);
+        if (!app.isBuiltIn()) m.add(0, M_INFO, 5, R.string.menu_app_info);
         popup.setOnMenuItemClickListener(item -> handleAppMenu(app, item.getItemId()));
-        popup.show();
-    }
-
-    // ---------------------------------------------------------------------------------------------
-    // App groups
-    // ---------------------------------------------------------------------------------------------
-
-    /** Checklist of the user's groups for one app, with a "New group" button. */
-    private void showGroupsDialog(AppInfo app) {
-        String[] names = prefs.getGroups().toArray(new String[0]);
-        boolean[] checked = new boolean[names.length];
-        for (int i = 0; i < names.length; i++) checked[i] = prefs.isInGroup(names[i], app.key);
-        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this,
-                android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(getString(R.string.groups_for, app.label))
-                .setNeutralButton(R.string.group_new, (d, w) -> promptGroupName(null, name -> {
-                    prefs.setInGroup(name, app.key, true);
-                    refreshGroups();
-                }))
-                .setPositiveButton(R.string.dialog_ok, null);
-        if (names.length == 0) {
-            b.setMessage(R.string.groups_empty);
-        } else {
-            b.setMultiChoiceItems(names, checked, (d, which, isChecked) -> {
-                prefs.setInGroup(names[which], app.key, isChecked);
-                refreshGroups();
-            });
-        }
-        b.show();
-    }
-
-    private interface NameCallback {
-        void onName(String name);
-    }
-
-    /** Asks for a group name; a non-null {@code current} renames that group instead. */
-    private void promptGroupName(String current, NameCallback created) {
-        android.widget.EditText input = new android.widget.EditText(this);
-        input.setSingleLine(true);
-        input.setHint(R.string.group_name_hint);
-        if (current != null) input.setText(current);
-        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(current == null ? R.string.group_new : R.string.group_rename)
-                .setView(input)
-                .setPositiveButton(R.string.dialog_ok, (d, w) -> {
-                    String text = input.getText().toString();
-                    if (current != null) {
-                        prefs.renameGroup(current, text);
-                    } else {
-                        String name = prefs.addGroup(text);
-                        if (name != null && created != null) created.onName(name);
-                    }
-                    refreshGroups();
-                })
-                .setNegativeButton(R.string.dialog_cancel, null)
-                .show();
-    }
-
-    @Override
-    public void onCreateGroup() {
-        promptGroupName(null, name -> {
-            refreshGroups();
-            startMenu.selectGroup(name);
-        });
-    }
-
-    @Override
-    public void onGroupLongClicked(String group, View anchor) {
-        PopupMenu popup = new PopupMenu(this, anchor);
-        popup.getMenu().add(0, 1, 0, R.string.group_rename);
-        popup.getMenu().add(0, 2, 1, R.string.group_delete);
-        popup.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == 1) {
-                promptGroupName(group, null);
-            } else {
-                new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                        .setMessage(getString(R.string.group_delete_confirm, group))
-                        .setPositiveButton(R.string.group_delete, (d, w) -> {
-                            prefs.deleteGroup(group);
-                            refreshGroups();
-                        })
-                        .setNegativeButton(R.string.dialog_cancel, null)
-                        .show();
-            }
-            return true;
-        });
         popup.show();
     }
 
@@ -654,9 +560,6 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
                 return true;
             case M_INFO:
                 ExternalLauncher.showAppInfo(this, app);
-                return true;
-            case M_GROUPS:
-                showGroupsDialog(app);
                 return true;
             case M_CLOSE_ALL:
                 for (DesktopWindow w : windowLayer.windowsFor(app.key)) windowLayer.closeWindow(w);

@@ -19,8 +19,8 @@ public final class Prefs {
     private static final String KEY_FREEFORM_HINT = "freeform_hint_dismissed";
     private static final String KEY_FREEFORM_FORCED = "freeform_forced";
     private static final String KEY_TASKBAR_OPACITY = "taskbar_opacity";
-    private static final String KEY_GROUPS = "groups";
-    private static final String KEY_GROUP_PREFIX = "group.";
+    private static final String KEY_FOLDERS = "folders";
+    private static final String KEY_FOLDER_PREFIX = "folder.";
     private static final String KEY_DESKTOP_ICON_SIZE = "desktop_icon_size";
     private static final String KEY_DESKTOP_ICON_SPACING = "desktop_icon_spacing";
     private static final String KEY_TASKBAR_ICON_SIZE = "taskbar_icon_size";
@@ -175,46 +175,71 @@ public final class Prefs {
         sp.edit().putInt(KEY_TASKBAR_ICON_SPACING, dp).apply();
     }
 
-    /** User-made app groups, in creation order. */
-    public List<String> getGroups() {
-        return readList(KEY_GROUPS, new ArrayList<>());
+    /** App folders in the Apps panel, in creation order. An app is in at most one folder. */
+    public List<String> getFolders() {
+        return readList(KEY_FOLDERS, new ArrayList<>());
     }
 
-    /** @return the cleaned-up name actually stored, or null if it was empty. */
-    public String addGroup(String name) {
-        String n = name.replace('\n', ' ').trim();
-        if (n.isEmpty()) return null;
-        if (!getGroups().contains(n)) writeToggle(KEY_GROUPS, getGroups(), n, true);
+    public List<String> getFolderApps(String folder) {
+        return readList(KEY_FOLDER_PREFIX + folder, new ArrayList<>());
+    }
+
+    /** @return the folder holding {@code appKey}, or null. */
+    public String folderOf(String appKey) {
+        for (String f : getFolders()) {
+            if (getFolderApps(f).contains(appKey)) return f;
+        }
+        return null;
+    }
+
+    /** Creates a folder with these apps; the name gets a number if it is taken. @return its name. */
+    public String createFolder(String name, List<String> appKeys) {
+        String base = name.replace('\n', ' ').trim();
+        String n = base;
+        for (int i = 2; getFolders().contains(n); i++) n = base + " " + i;
+        for (String key : appKeys) removeFromAnyFolder(key);
+        writeToggle(KEY_FOLDERS, getFolders(), n, true);
+        sp.edit().putString(KEY_FOLDER_PREFIX + n, String.join("\n", appKeys)).apply();
         return n;
     }
 
-    public void deleteGroup(String name) {
-        writeToggle(KEY_GROUPS, getGroups(), name, false);
-        sp.edit().remove(KEY_GROUP_PREFIX + name).apply();
+    public void addToFolder(String folder, String appKey) {
+        removeFromAnyFolder(appKey);
+        writeToggle(KEY_FOLDER_PREFIX + folder, getFolderApps(folder), appKey, true);
     }
 
-    public void renameGroup(String from, String to) {
+    /** Takes an app out of its folder; a folder left with one app or none is removed. */
+    public void removeFromFolder(String folder, String appKey) {
+        List<String> apps = getFolderApps(folder);
+        apps.remove(appKey);
+        if (apps.size() <= 1) {
+            deleteFolder(folder);
+        } else {
+            sp.edit().putString(KEY_FOLDER_PREFIX + folder, String.join("\n", apps)).apply();
+        }
+    }
+
+    private void removeFromAnyFolder(String appKey) {
+        String f = folderOf(appKey);
+        if (f != null) removeFromFolder(f, appKey);
+    }
+
+    public void deleteFolder(String folder) {
+        writeToggle(KEY_FOLDERS, getFolders(), folder, false);
+        sp.edit().remove(KEY_FOLDER_PREFIX + folder).apply();
+    }
+
+    /** @return the folder's name afterwards (unchanged if the new name is empty or taken). */
+    public String renameFolder(String from, String to) {
         String n = to.replace('\n', ' ').trim();
-        if (n.isEmpty() || n.equals(from) || getGroups().contains(n)) return;
-        List<String> groups = getGroups();
-        if (!groups.contains(from)) return;
-        groups.set(groups.indexOf(from), n);
-        List<String> members = getGroupApps(from);
-        sp.edit().putString(KEY_GROUPS, String.join("\n", groups))
-                .putString(KEY_GROUP_PREFIX + n, String.join("\n", members))
-                .remove(KEY_GROUP_PREFIX + from).apply();
-    }
-
-    public List<String> getGroupApps(String group) {
-        return readList(KEY_GROUP_PREFIX + group, new ArrayList<>());
-    }
-
-    public boolean isInGroup(String group, String appKey) {
-        return getGroupApps(group).contains(appKey);
-    }
-
-    public void setInGroup(String group, String appKey, boolean member) {
-        writeToggle(KEY_GROUP_PREFIX + group, getGroupApps(group), appKey, member);
+        List<String> folders = getFolders();
+        if (n.isEmpty() || n.equals(from) || folders.contains(n) || !folders.contains(from)) return from;
+        folders.set(folders.indexOf(from), n);
+        List<String> apps = getFolderApps(from);
+        sp.edit().putString(KEY_FOLDERS, String.join("\n", folders))
+                .putString(KEY_FOLDER_PREFIX + n, String.join("\n", apps))
+                .remove(KEY_FOLDER_PREFIX + from).apply();
+        return n;
     }
 
     private int clampInt(String key, int def, int min, int max) {
