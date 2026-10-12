@@ -15,6 +15,12 @@ public final class Prefs {
     private static final String KEY_LANDSCAPE = "landscape";
     private static final String KEY_FREEFORM = "freeform";
     private static final String KEY_DESKTOP_UA = "desktop_ua";
+    private static final String KEY_WINDOW_SIZE = "window_size";
+    private static final String KEY_FREEFORM_HINT = "freeform_hint_dismissed";
+
+    public static final int SIZE_SMALL = 0;
+    public static final int SIZE_MEDIUM = 1;
+    public static final int SIZE_LARGE = 2;
 
     /** Wallpaper index meaning "show the system wallpaper behind the desktop". */
     public static final int WALLPAPER_SYSTEM = -1;
@@ -84,6 +90,23 @@ public final class Prefs {
 
     public void setDesktopUserAgent(boolean v) {
         sp.edit().putBoolean(KEY_DESKTOP_UA, v).apply();
+    }
+
+    /** Size of pop-up windows for installed Android apps: {@link #SIZE_SMALL} .. {@link #SIZE_LARGE}. */
+    public int getWindowSize() {
+        return Math.max(SIZE_SMALL, Math.min(SIZE_LARGE, sp.getInt(KEY_WINDOW_SIZE, SIZE_MEDIUM)));
+    }
+
+    public void setWindowSize(int size) {
+        sp.edit().putInt(KEY_WINDOW_SIZE, size).apply();
+    }
+
+    public boolean isFreeformHintDismissed() {
+        return sp.getBoolean(KEY_FREEFORM_HINT, false);
+    }
+
+    public void setFreeformHintDismissed(boolean v) {
+        sp.edit().putBoolean(KEY_FREEFORM_HINT, v).apply();
     }
 
     private List<String> readList(String key, List<String> def) {

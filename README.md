@@ -47,6 +47,11 @@ adb reboot
 
 DeZ'in kendi uygulamaları bu ayar olmadan da her zaman pencerede çalışır.
 
+Açılır pencereler etkinken Android uygulamaları DeZ masaüstünün içinde (görev çubuğunun üstünde) açılır:
+- Boyut: *DeZ Ayarları → Pencereler → Küçük / Orta / Büyük*
+- Uygulamaya uzun basınca: **Sol yarıda aç**, **Sağ yarıda aç**, **Masaüstünü kaplayarak aç**, **Tam ekranda aç**
+- Ayar kapalıysa ilk denemede ne yapılacağını anlatan bir pencere çıkar (bir daha gösterilmemesi seçilebilir).
+
 ## Derleme
 
 ```sh

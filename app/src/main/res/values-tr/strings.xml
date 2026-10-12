@@ -34,7 +34,6 @@
     <string name="external_display_found">Harici ekran bağlandı</string>
     <string name="external_display_start">DeZ\'i bu ekranda başlat</string>
     <string name="launch_failed">%1$s açılamadı</string>
-    <string name="freeform_unavailable_toast">Bu cihazda açılır pencereler etkin değil, uygulama tam ekranda açılıyor. DeZ Ayarları → Pencereler bölümüne bakın.</string>
     <string name="calc_error">Hata</string>
     <string name="dialog_ok">Tamam</string>
     <string name="dialog_cancel">İptal</string>
@@ -89,6 +88,15 @@
     <string name="sample_text">Bu içerik bir DeZ pencere çerçevesinin içinde.</string>
     <string name="sample_button">Tıkla</string>
     <string name="sample_clicked">%1$d kez tıklandı</string>
+    <string name="menu_open_left">Sol yarıda aç</string>
+    <string name="menu_open_right">Sağ yarıda aç</string>
+    <string name="menu_open_fill">Masaüstünü kaplayarak aç</string>
+    <string name="freeform_help_title">Açılır pencereler kapalı</string>
+    <string name="freeform_help_dismiss">Bir daha gösterme</string>
+    <string name="settings_window_size">Android uygulama pencerelerinin boyutu:</string>
+    <string name="size_small">Küçük</string>
+    <string name="size_medium">Orta</string>
+    <string name="size_large">Büyük</string>
     <plurals name="files_items">
         <item quantity="one">%1$d öğe</item>
         <item quantity="other">%1$d öğe</item>

@@ -383,6 +383,14 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
     }
 
     public void launchApp(AppInfo app, int mode) {
+        launchApp(app, mode, PLACE_CASCADE);
+    }
+
+    /**
+     * @param placement where an installed app's pop-up window goes on the DeZ desktop
+     *                  ({@link #PLACE_CASCADE}, {@link #PLACE_LEFT}, {@link #PLACE_RIGHT}, {@link #PLACE_FILL}).
+     */
+    public void launchApp(AppInfo app, int mode, int placement) {
         startMenu.hide();
         recents.hide();
         if (app.isBuiltIn()) {
@@ -394,9 +402,9 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
                 || ((mode == LAUNCH_DEFAULT || mode == LAUNCH_NEW_INSTANCE) && prefs.isFreeformEnabled());
         Rect bounds = null;
         if (wantWindow && freeform) {
-            bounds = nextExternalBounds();
-        } else if (mode == LAUNCH_WINDOW) {
-            Toast.makeText(this, R.string.freeform_unavailable_toast, Toast.LENGTH_LONG).show();
+            bounds = externalBounds(placement);
+        } else if (wantWindow && (mode == LAUNCH_WINDOW || !prefs.isFreeformHintDismissed())) {
+            showFreeformHelp();
         }
         if (ExternalLauncher.launch(this, app, bounds)) {
             externalRunning.remove(app.key);
@@ -405,18 +413,41 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
         }
     }
 
-    /** Cascaded window bounds for installed apps, in screen coordinates inside the workspace. */
-    private Rect nextExternalBounds() {
+    public static final int PLACE_CASCADE = 0;
+    public static final int PLACE_LEFT = 1;
+    public static final int PLACE_RIGHT = 2;
+    public static final int PLACE_FILL = 3;
+
+    /**
+     * Bounds, in screen coordinates, for an installed app's pop-up window: inside the DeZ desktop
+     * area (never under the taskbar), sized by the "Window size" setting.
+     */
+    private Rect externalBounds(int placement) {
         int[] loc = new int[2];
         workspace.getLocationOnScreen(loc);
         int W = workspace.getWidth(), H = workspace.getHeight();
-        int w, h;
-        if (windowLayer.isCompact()) {
-            w = Math.round(W * 0.92f);
-            h = Math.round(H * 0.9f);
-        } else {
-            w = Math.min(Math.round(W * 0.6f), Ui.dp(this, 900));
-            h = Math.min(Math.round(H * 0.75f), Ui.dp(this, 700));
+        switch (placement) {
+            case PLACE_LEFT:
+                return new Rect(loc[0], loc[1], loc[0] + W / 2, loc[1] + H);
+            case PLACE_RIGHT:
+                return new Rect(loc[0] + W / 2, loc[1], loc[0] + W, loc[1] + H);
+            case PLACE_FILL:
+                return new Rect(loc[0], loc[1], loc[0] + W, loc[1] + H);
+            default:
+                break;
+        }
+        // {width, height} fractions and dp caps for small / medium / large.
+        float[][] desk = {{0.45f, 0.55f}, {0.6f, 0.75f}, {0.8f, 0.88f}};
+        float[][] phone = {{0.8f, 0.7f}, {0.92f, 0.86f}, {1f, 1f}};
+        int[][] caps = {{640, 480}, {900, 700}, {1280, 900}};
+        int size = prefs.getWindowSize();
+        boolean compact = windowLayer.isCompact();
+        float[] f = (compact ? phone : desk)[size];
+        int w = Math.round(W * f[0]);
+        int h = Math.round(H * f[1]);
+        if (!compact) {
+            w = Math.min(w, Ui.dp(this, caps[size][0]));
+            h = Math.min(h, Ui.dp(this, caps[size][1]));
         }
         int step = Ui.dp(this, 32);
         int offset = (externalCascade++ % 5) * step;
@@ -425,12 +456,45 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
         return new Rect(left, top, left + w, top + h);
     }
 
+    /** Explains once how to turn on pop-up windows; apps open full screen meanwhile. */
+    private void showFreeformHelp() {
+        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(R.string.freeform_help_title)
+                .setMessage(getString(R.string.settings_freeform_off) + "\n\n"
+                        + getString(R.string.settings_freeform_cmd))
+                .setPositiveButton(R.string.settings_dev_options, (d, w) -> openDeveloperOptions())
+                .setNeutralButton(R.string.freeform_help_dismiss,
+                        (d, w) -> prefs.setFreeformHintDismissed(true))
+                .setNegativeButton(R.string.dialog_ok, null)
+                .show();
+    }
+
+    public void openDeveloperOptions() {
+        try {
+            startActivity(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS));
+        } catch (ActivityNotFoundException e) {
+            startActivity(new Intent(Settings.ACTION_DEVICE_INFO_SETTINGS));
+        }
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Context menus
     // ---------------------------------------------------------------------------------------------
 
     private static final int M_OPEN = 1, M_WINDOW = 2, M_FULLSCREEN = 3, M_NEW = 4, M_PIN = 5,
-            M_DESKTOP = 6, M_INFO = 7, M_CLOSE_ALL = 8, M_FORGET = 9;
+            M_DESKTOP = 6, M_INFO = 7, M_CLOSE_ALL = 8, M_FORGET = 9, M_LEFT = 10, M_RIGHT = 11,
+            M_FILL = 12;
+
+    /** "Open in pop-up window" plus, when pop-up windows work, left / right half and fill. */
+    private void addWindowItems(Menu m, int order) {
+        m.add(0, M_WINDOW, order, R.string.menu_open_window);
+        if (ExternalLauncher.isFreeformSupported(this)) {
+            m.add(0, M_LEFT, order, R.string.menu_open_left);
+            m.add(0, M_RIGHT, order, R.string.menu_open_right);
+            m.add(0, M_FILL, order, R.string.menu_open_fill);
+        }
+        m.add(0, M_FULLSCREEN, order, R.string.menu_open_fullscreen);
+    }
 
     private void showAppMenu(AppInfo app, View anchor) {
         PopupMenu popup = new PopupMenu(this, anchor);
@@ -439,8 +503,7 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
         if (app.isBuiltIn()) {
             if (!app.builtIn.isSingleInstance()) m.add(0, M_NEW, 1, R.string.menu_new_window);
         } else {
-            m.add(0, M_WINDOW, 1, R.string.menu_open_window);
-            m.add(0, M_FULLSCREEN, 2, R.string.menu_open_fullscreen);
+            addWindowItems(m, 1);
         }
         m.add(0, M_PIN, 3, prefs.isPinned(app.key) ? R.string.menu_unpin : R.string.menu_pin);
         m.add(0, M_DESKTOP, 4, prefs.isOnDesktop(app.key)
@@ -460,6 +523,15 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
                 return true;
             case M_FULLSCREEN:
                 launchApp(app, LAUNCH_FULLSCREEN);
+                return true;
+            case M_LEFT:
+                launchApp(app, LAUNCH_WINDOW, PLACE_LEFT);
+                return true;
+            case M_RIGHT:
+                launchApp(app, LAUNCH_WINDOW, PLACE_RIGHT);
+                return true;
+            case M_FILL:
+                launchApp(app, LAUNCH_WINDOW, PLACE_FILL);
                 return true;
             case M_NEW:
                 launchApp(app, LAUNCH_NEW_INSTANCE);
@@ -577,8 +649,7 @@ public class DesktopActivity extends Activity implements Taskbar.Callbacks, Star
             if (!app.builtIn.isSingleInstance()) m.add(0, M_NEW, 0, R.string.menu_new_window);
             else m.add(0, M_OPEN, 0, R.string.menu_open);
         } else {
-            m.add(0, M_WINDOW, 0, R.string.menu_open_window);
-            m.add(0, M_FULLSCREEN, 1, R.string.menu_open_fullscreen);
+            addWindowItems(m, 0);
         }
         m.add(0, M_PIN, 2, prefs.isPinned(key) ? R.string.menu_unpin : R.string.menu_pin);
         if (!windowLayer.windowsFor(key).isEmpty()) m.add(0, M_CLOSE_ALL, 3, R.string.menu_close_all);

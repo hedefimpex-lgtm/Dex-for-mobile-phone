@@ -35,7 +35,6 @@
     <string name="external_display_found">External display connected</string>
     <string name="external_display_start">Start DeZ on the display</string>
     <string name="launch_failed">Couldn\'t open %1$s</string>
-    <string name="freeform_unavailable_toast">Pop-up windows are not enabled on this device, so the app opens in full screen. See DeZ Settings → Windows.</string>
     <string name="calc_error">Error</string>
     <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Cancel</string>
@@ -91,6 +90,15 @@
     <string name="sample_text">This content sits inside a DeZ window frame.</string>
     <string name="sample_button">Click me</string>
     <string name="sample_clicked">Clicked %1$d times</string>
+    <string name="menu_open_left">Open in left half</string>
+    <string name="menu_open_right">Open in right half</string>
+    <string name="menu_open_fill">Open filling the desktop</string>
+    <string name="freeform_help_title">Pop-up windows are off</string>
+    <string name="freeform_help_dismiss">Don\'t show again</string>
+    <string name="settings_window_size">Size of Android app windows:</string>
+    <string name="size_small">Small</string>
+    <string name="size_medium">Medium</string>
+    <string name="size_large">Large</string>
     <plurals name="files_items">
         <item quantity="one">%1$d item</item>
         <item quantity="other">%1$d items</item>

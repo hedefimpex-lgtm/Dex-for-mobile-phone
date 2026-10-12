@@ -1,11 +1,8 @@
 package com.dez.desktop.apps;
 
 import android.annotation.SuppressLint;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.drawable.GradientDrawable;
-import android.provider.Settings;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.Gravity;
@@ -100,9 +97,10 @@ final class SettingsApp extends WindowApp {
                 cmd.setBackground(Ui.rounded(Ui.SURFACE, Ui.dp(c, 6)));
                 int p = Ui.dp(c, 8);
                 cmd.setPadding(p, p, p, p);
-                action(R.string.settings_dev_options,
-                        () -> open(new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)));
+                action(R.string.settings_dev_options, host::openDeveloperOptions);
             }
+            body(c.getString(R.string.settings_window_size));
+            column.addView(sizeChooser(prefs));
             toggle(R.string.settings_desktop_ua, prefs.isDesktopUserAgent(),
                     (b, on) -> prefs.setDesktopUserAgent(on));
 
@@ -131,14 +129,6 @@ final class SettingsApp extends WindowApp {
 
             header(R.string.settings_about);
             body(c.getString(R.string.settings_version, BuildConfig.VERSION_NAME));
-        }
-
-        private void open(Intent i) {
-            try {
-                host.startActivity(i);
-            } catch (ActivityNotFoundException e) {
-                host.startActivity(new Intent(Settings.ACTION_SETTINGS));
-            }
         }
 
         private void header(int res) {
@@ -174,6 +164,27 @@ final class SettingsApp extends WindowApp {
             lp.topMargin = Ui.dp(host, 4);
             lp.bottomMargin = Ui.dp(host, 4);
             column.addView(b, lp);
+        }
+
+        /** Small / Medium / Large segmented choice for Android apps' pop-up windows. */
+        private View sizeChooser(Prefs prefs) {
+            Context c = host;
+            LinearLayout row = new LinearLayout(c);
+            int[] labels = {R.string.size_small, R.string.size_medium, R.string.size_large};
+            for (int size = Prefs.SIZE_SMALL; size <= Prefs.SIZE_LARGE; size++) {
+                int s = size;
+                boolean selected = prefs.getWindowSize() == s;
+                TextView b = Ui.button(c, c.getString(labels[s]), v -> {
+                    prefs.setWindowSize(s);
+                    build();
+                });
+                if (selected) b.setBackground(Ui.ripple(c, Ui.ACCENT, 8));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                lp.rightMargin = Ui.dp(c, 6);
+                row.addView(b, lp);
+            }
+            return row;
         }
 
         private View swatch(int index, boolean selected) {
