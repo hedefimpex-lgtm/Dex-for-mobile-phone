@@ -66,7 +66,7 @@ public class WindowLayer extends FrameLayout implements DesktopWindow.Host {
         return out;
     }
 
-    /** True when the desktop is too small for overlapping windows (phone in portrait). */
+    /** True on small desktops (phone screen), where windows open larger. */
     public boolean isCompact() {
         return Ui.pxToDp(getContext(), getWidth()) < 600 || Ui.pxToDp(getContext(), getHeight()) < 340;
     }
@@ -75,15 +75,23 @@ public class WindowLayer extends FrameLayout implements DesktopWindow.Host {
         DesktopWindow w = new DesktopWindow(getContext(), app, this);
         w.setContent(content);
         int W = getWidth(), H = getHeight();
-        int width = Math.min(Math.round(W * 0.66f), Ui.dp(getContext(), 960));
-        int height = Math.min(Math.round(H * 0.78f), Ui.dp(getContext(), 680));
-        int step = Ui.dp(getContext(), 28);
-        int left = Math.max(0, (W - width) / 2 - step * 2 + (cascade % 5) * step);
-        int top = Math.max(0, (H - height) / 2 - step * 2 + (cascade % 5) * step);
+        int width, height;
+        if (isCompact()) {
+            // Phone screen: still a floating, framed window, just using most of the space.
+            width = Math.round(W * 0.92f);
+            height = Math.round(H * 0.86f);
+        } else {
+            width = Math.min(Math.round(W * 0.66f), Ui.dp(getContext(), 960));
+            height = Math.min(Math.round(H * 0.78f), Ui.dp(getContext(), 680));
+        }
+        int step = Ui.dp(getContext(), isCompact() ? 16 : 28);
+        int left = Math.max(0, Math.min(W - width, (W - width) / 2 - step * 2 + (cascade % 5) * step));
+        int top = Math.max(0, Math.min(H - height, (H - height) / 2 - step * 2 + (cascade % 5) * step));
         cascade++;
         w.normalBounds.set(left, top, left + width, top + height);
         addView(w);
-        if (isCompact() || W == 0) {
+        if (W == 0) {
+            // Desktop not laid out yet: fill it, the window can be restored later.
             w.maximized = true;
             w.applyBounds(0, 0, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         } else {
@@ -139,7 +147,7 @@ public class WindowLayer extends FrameLayout implements DesktopWindow.Host {
         if (w.maximized || w.snap != DesktopWindow.SNAP_NONE) {
             w.maximized = false;
             w.snap = DesktopWindow.SNAP_NONE;
-            if (w.normalBounds.isEmpty() || isCompact()) {
+            if (w.normalBounds.isEmpty()) {
                 w.maximized = true;
                 w.applyBounds(0, 0, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
             } else {
@@ -291,12 +299,8 @@ public class WindowLayer extends FrameLayout implements DesktopWindow.Host {
                 if (win.snap != DesktopWindow.SNAP_NONE) {
                     snap(win, win.snap);
                 } else if (!win.maximized) {
-                    if (isCompact()) {
-                        maximize(win);
-                    } else {
-                        win.normalBounds.set(clampToLayer(win.normalBounds));
-                        win.applyBounds(win.normalBounds);
-                    }
+                    win.normalBounds.set(clampToLayer(win.normalBounds));
+                    win.applyBounds(win.normalBounds);
                 }
             }
         });

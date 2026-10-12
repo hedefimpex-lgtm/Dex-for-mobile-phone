@@ -11,7 +11,7 @@ Telefon ekranında veya USB-C/HDMI ile bağlanan harici bir monitörde çalış�
 - Kenar ve köşelerden yeniden boyutlandırma
 - Ekranın sol/sağ kenarına sürükleyince yarım ekrana yaslama, üst kenara sürükleyince tam ekran (canlı önizleme ile)
 - Büyütülmüş pencereyi sürükleyince parmağın altında eski boyutuna dönme
-- Odak, z-sırası ve basamaklı (cascade) yerleşim; dar ekranda (telefon dikey) pencereler otomatik büyütülür
+- Odak, z-sırası ve basamaklı (cascade) yerleşim; telefon ekranında da pencereler çerçeveli, yüzen pencere olarak açılır (ekranın büyük kısmını kaplayarak)
 
 **Masaüstü yapısı**
 - Görev çubuğu: Uygulamalar, Son uygulamalar, Masaüstünü göster, Geri; sabitlenmiş ve çalışan uygulamalar

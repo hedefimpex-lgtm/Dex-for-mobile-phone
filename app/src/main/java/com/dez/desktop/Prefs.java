@@ -22,7 +22,7 @@ public final class Prefs {
     private static final List<String> DEFAULT_PINNED = Arrays.asList(
             "dez:files", "dez:browser", "dez:notes");
     private static final List<String> DEFAULT_DESKTOP = Arrays.asList(
-            "dez:files", "dez:browser", "dez:notes", "dez:calculator", "dez:settings");
+            "dez:files", "dez:browser", "dez:notes", "dez:calculator", "dez:settings", "dez:sample");
 
     private final SharedPreferences sp;
 
