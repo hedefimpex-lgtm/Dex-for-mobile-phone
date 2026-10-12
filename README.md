@@ -18,6 +18,9 @@ Telefon ekranında veya USB-C/HDMI ile bağlanan harici bir monitörde çalış�
   (çalışan / odaktaki göstergesiyle); sistem tepsisi (ağ, pil, saat-tarih, bildirimler)
 - Uygulama paneli: arama + tüm uygulamaların ızgarası; uzun basınca bağlam menüsü
   (pencerede aç, tam ekranda aç, yeni pencere, görev çubuğuna sabitle, masaüstüne ekle, uygulama bilgisi)
+- Uygulama gruplama: panelin üstündeki sekmelerle **Tümü**, kendi gruplarınız ve otomatik kategoriler
+  (Verimlilik, Sosyal, Oyunlar, Müzik, Video, Fotoğraflar…). Uygulamaya uzun basıp **Gruplar…** ile gruba ekleyin;
+  grup sekmesine uzun basarak yeniden adlandırın veya silin
 - Masaüstü simgeleri (yukarıdan aşağı, soldan sağa) ve masaüstü bağlam menüsü
 - Son uygulamalar ekranı: her pencere için canlı küçük resim, kapat / tümünü kapat
 - Duvar kağıdı seçenekleri (gradyanlar veya sistem duvar kağıdı)

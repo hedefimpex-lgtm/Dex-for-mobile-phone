@@ -19,6 +19,8 @@ public final class Prefs {
     private static final String KEY_FREEFORM_HINT = "freeform_hint_dismissed";
     private static final String KEY_FREEFORM_FORCED = "freeform_forced";
     private static final String KEY_TASKBAR_OPACITY = "taskbar_opacity";
+    private static final String KEY_GROUPS = "groups";
+    private static final String KEY_GROUP_PREFIX = "group.";
     private static final String KEY_DESKTOP_ICON_SIZE = "desktop_icon_size";
     private static final String KEY_DESKTOP_ICON_SPACING = "desktop_icon_spacing";
     private static final String KEY_TASKBAR_ICON_SIZE = "taskbar_icon_size";
@@ -171,6 +173,48 @@ public final class Prefs {
 
     public void setTaskbarIconSpacing(int dp) {
         sp.edit().putInt(KEY_TASKBAR_ICON_SPACING, dp).apply();
+    }
+
+    /** User-made app groups, in creation order. */
+    public List<String> getGroups() {
+        return readList(KEY_GROUPS, new ArrayList<>());
+    }
+
+    /** @return the cleaned-up name actually stored, or null if it was empty. */
+    public String addGroup(String name) {
+        String n = name.replace('\n', ' ').trim();
+        if (n.isEmpty()) return null;
+        if (!getGroups().contains(n)) writeToggle(KEY_GROUPS, getGroups(), n, true);
+        return n;
+    }
+
+    public void deleteGroup(String name) {
+        writeToggle(KEY_GROUPS, getGroups(), name, false);
+        sp.edit().remove(KEY_GROUP_PREFIX + name).apply();
+    }
+
+    public void renameGroup(String from, String to) {
+        String n = to.replace('\n', ' ').trim();
+        if (n.isEmpty() || n.equals(from) || getGroups().contains(n)) return;
+        List<String> groups = getGroups();
+        if (!groups.contains(from)) return;
+        groups.set(groups.indexOf(from), n);
+        List<String> members = getGroupApps(from);
+        sp.edit().putString(KEY_GROUPS, String.join("\n", groups))
+                .putString(KEY_GROUP_PREFIX + n, String.join("\n", members))
+                .remove(KEY_GROUP_PREFIX + from).apply();
+    }
+
+    public List<String> getGroupApps(String group) {
+        return readList(KEY_GROUP_PREFIX + group, new ArrayList<>());
+    }
+
+    public boolean isInGroup(String group, String appKey) {
+        return getGroupApps(group).contains(appKey);
+    }
+
+    public void setInGroup(String group, String appKey, boolean member) {
+        writeToggle(KEY_GROUP_PREFIX + group, getGroupApps(group), appKey, member);
     }
 
     private int clampInt(String key, int def, int min, int max) {

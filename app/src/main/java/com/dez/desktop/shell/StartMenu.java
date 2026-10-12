@@ -17,6 +17,7 @@ import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.GridView;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -26,7 +27,11 @@ import com.dez.desktop.R;
 import com.dez.desktop.Ui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Locale;
 
 /** DeX-style app drawer: a panel above the taskbar with search and a grid of all apps. */
@@ -40,13 +45,29 @@ public class StartMenu extends FrameLayout {
         void onOpenSettings();
 
         void onExitDesktop();
+
+        void onCreateGroup();
+
+        void onGroupLongClicked(String group, View anchor);
     }
+
+    // Automatic groups, from ApplicationInfo.CATEGORY_* (values inlined; some need newer SDKs).
+    private static final int[] CATEGORIES = {AppInfo.CATEGORY_DEZ, 7, 4, 0, 1, 2, 3, 5, 6, 8};
+    private static final int[] CATEGORY_LABELS = {R.string.cat_dez, R.string.cat_productivity,
+            R.string.cat_social, R.string.cat_games, R.string.cat_audio, R.string.cat_video,
+            R.string.cat_image, R.string.cat_news, R.string.cat_maps, R.string.cat_accessibility};
+    private static final String FILTER_ALL = "all";
 
     private final Callbacks callbacks;
     private final LinearLayout panel;
     private final EditText search;
     private final AppsAdapter adapter = new AppsAdapter();
     private List<AppInfo> allApps = new ArrayList<>();
+    private final LinearLayout chips;
+    private List<String> groups = new ArrayList<>();
+    private Map<String, Set<String>> groupMembers = new HashMap<>();
+    /** "all", "group:NAME", "cat:CATEGORY" or "other". */
+    private String filter = FILTER_ALL;
 
     public StartMenu(Context c, Callbacks callbacks) {
         super(c);
@@ -105,6 +126,16 @@ public class StartMenu extends FrameLayout {
         panel.addView(searchRow, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 40)));
 
+        HorizontalScrollView chipScroll = new HorizontalScrollView(c);
+        chipScroll.setHorizontalScrollBarEnabled(false);
+        chips = new LinearLayout(c);
+        chips.setGravity(Gravity.CENTER_VERTICAL);
+        chipScroll.addView(chips);
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        clp.topMargin = Ui.dp(c, 10);
+        panel.addView(chipScroll, clp);
+
         GridView grid = new GridView(c);
         grid.setNumColumns(GridView.AUTO_FIT);
         grid.setColumnWidth(Ui.dp(c, 86));
@@ -138,7 +169,86 @@ public class StartMenu extends FrameLayout {
 
     public void setApps(List<AppInfo> apps) {
         allApps = new ArrayList<>(apps);
+        rebuildChips();
         adapter.filter(search.getText().toString());
+    }
+
+    /** User groups and their member app keys. */
+    public void setGroups(List<String> names, Map<String, Set<String>> members) {
+        groups = new ArrayList<>(names);
+        groupMembers = new HashMap<>(members);
+        if (filter.startsWith("group:") && !groups.contains(filter.substring(6))) filter = FILTER_ALL;
+        rebuildChips();
+        adapter.filter(search.getText().toString());
+    }
+
+    /** Shows only the given user group (e.g. right after creating it). */
+    public void selectGroup(String name) {
+        filter = "group:" + name;
+        rebuildChips();
+        adapter.filter(search.getText().toString());
+    }
+
+    /** Chip row: All, user groups, "+ New group", then automatic categories that have apps. */
+    private void rebuildChips() {
+        Context c = getContext();
+        chips.removeAllViews();
+        addChip(c.getString(R.string.group_all), FILTER_ALL, null);
+        for (String g : groups) {
+            View chip = addChip(g, "group:" + g, null);
+            chip.setOnLongClickListener(v -> {
+                callbacks.onGroupLongClicked(g, v);
+                return true;
+            });
+        }
+        addChip("+ " + c.getString(R.string.group_new), null, v -> callbacks.onCreateGroup());
+        Set<Integer> present = new HashSet<>();
+        boolean other = false;
+        for (AppInfo a : allApps) {
+            present.add(a.category);
+            other |= categoryIndex(a.category) < 0;
+        }
+        for (int i = 0; i < CATEGORIES.length; i++) {
+            if (present.contains(CATEGORIES[i])) {
+                addChip(c.getString(CATEGORY_LABELS[i]), "cat:" + CATEGORIES[i], null);
+            }
+        }
+        if (other) addChip(c.getString(R.string.cat_other), "other", null);
+    }
+
+    private static int categoryIndex(int category) {
+        for (int i = 0; i < CATEGORIES.length; i++) {
+            if (CATEGORIES[i] == category) return i;
+        }
+        return -1;
+    }
+
+    private View addChip(CharSequence text, String key, OnClickListener click) {
+        Context c = getContext();
+        boolean selected = key != null && key.equals(filter);
+        TextView chip = Ui.text(c, text, 13, selected ? 0xFFFFFFFF : Ui.TEXT);
+        chip.setSingleLine(true);
+        chip.setGravity(Gravity.CENTER);
+        chip.setPadding(Ui.dp(c, 14), 0, Ui.dp(c, 14), 0);
+        chip.setBackground(Ui.ripple(c, selected ? Ui.ACCENT : Ui.SURFACE, 16));
+        chip.setOnClickListener(click != null ? click : v -> {
+            filter = key;
+            rebuildChips();
+            adapter.filter(search.getText().toString());
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, Ui.dp(c, 32));
+        lp.rightMargin = Ui.dp(c, 6);
+        chips.addView(chip, lp);
+        return chip;
+    }
+
+    private boolean matchesFilter(AppInfo a) {
+        if (filter.equals(FILTER_ALL)) return true;
+        if (filter.equals("other")) return categoryIndex(a.category) < 0;
+        if (filter.startsWith("cat:")) return a.category == Integer.parseInt(filter.substring(4));
+        Set<String> members = groupMembers.get(filter.substring(6));
+        return members != null && members.contains(a.key);
     }
 
     public boolean isShowing() {
@@ -194,7 +304,10 @@ public class StartMenu extends FrameLayout {
             String q = query.trim().toLowerCase(Locale.getDefault());
             shown.clear();
             for (AppInfo a : allApps) {
-                if (q.isEmpty() || String.valueOf(a.label).toLowerCase(Locale.getDefault()).contains(q)) {
+                // A search looks through all apps; otherwise show the selected group.
+                boolean match = q.isEmpty() ? matchesFilter(a)
+                        : String.valueOf(a.label).toLowerCase(Locale.getDefault()).contains(q);
+                if (match) {
                     shown.add(a);
                 }
             }

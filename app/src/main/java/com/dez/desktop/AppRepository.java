@@ -51,7 +51,7 @@ public final class AppRepository {
                     String key = info.getComponentName().flattenToShortString();
                     if (!user.equals(me)) key += "@" + um.getSerialNumberForUser(user);
                     result.add(AppInfo.external(key, info.getLabel(), info.getBadgedIcon(0),
-                            info.getComponentName(), user));
+                            info.getComponentName(), user, info.getApplicationInfo().category));
                 }
             }
             Collator collator = Collator.getInstance();
